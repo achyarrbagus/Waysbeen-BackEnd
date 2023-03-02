@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"backEnd/models"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -27,8 +26,8 @@ func (r *repository) FindProduct() ([]models.Product, error) {
 }
 
 func (r *repository) CreateProduct(product models.Product) (models.Product, error) {
-	err := r.db.Exec("INSERT INTO products( name , price , description , stock , created_at , updated_at) VALUES (?,?,?,?,?,?)", product.Name, product.Price, product.Description, product.Stock, time.Now(), time.Now()).Error
-
+	// err := r.db.Exec("INSERT INTO products( name , price , description , stock , created_at , updated_at,image) VALUES (?,?,?,?,?,?,?)", product.Name, product.Price, product.Description, product.Stock, time.Now(), time.Now(), image).Error
+	err := r.db.Create(&product).Error
 	return product, err
 }
 

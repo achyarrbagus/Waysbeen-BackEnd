@@ -39,7 +39,6 @@ func (h *handlerProfile) CreateProfil(c echo.Context) error {
 	profil := models.Profile{
 		Gender:  request.Gender,
 		Address: request.Address,
-		Phone:   request.Phone,
 	}
 
 	data, err := h.ProfileRepository.CreateProfil(profil)
@@ -76,7 +75,6 @@ func convertResponseProfile(u models.Profile) profiledto.ProfileResponse {
 		ID:      u.ID,
 		Gender:  u.Gender,
 		Address: u.Address,
-		UserID:  u.UserId,
 		User:    u.User,
 	}
 }

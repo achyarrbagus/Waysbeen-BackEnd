@@ -2,27 +2,44 @@ package models
 
 import "time"
 
-// product modal struct
 type Product struct {
-	ID          int                  `json:"id" gorm:"primary_key:auto_increment"`
-	Name        string               `json:"name" gorm:"type: varchar(225)"`
-	Price       int                  `json:"price" gorm:"type:int"`
-	Description string               `json:"description" gorm:"type: varchar(225)"`
-	Stock       int                  `json:"stock"`
-	CreatedAt   time.Time            `json:"created_at"`
-	UpdatedAt   time.Time            `json:"updated_at"`
+	ID          int                  `json:"id"`
+	Name        string               `json:"name" gorm:"type: varchar(255)"`
+	Description string               `json:"description" gorm:"type: varchar(255)"`
+	Price       int                  `json:"price" gorm:"type: int"`
+	Stock       int                  `json:"stock" gorm:"type: int"`
+	Photo       string               `json:"photo" gorm:"type: varchar(255)"`
 	UserID      int                  `json:"user_id" form:"user_id"`
 	User        UsersProfileResponse `json:"user"`
-	Image       string               `json:"image" form:"image" gorm:"type: varchar(255)"`
+	CreatedAt   time.Time            `json:"created_at"`
+	UpdatedAt   time.Time            `json:"updated_at"`
 }
 
 type ProductResponse struct {
-	ID     int                  `json:"id"`
-	Name   string               `json:"name"`
-	Desc   string               `json:"desc"`
-	Price  int                  `json:"price"`
-	Image  string               `json:"image"`
-	Stock  int                  `json:"stock"`
-	UserID int                  `json:"-"`
-	User   UsersProfileResponse `json:"user"`
+	ID          int                  `json:"id"`
+	Name        string               `json:"name" form:"name" validate:"required"`
+	Price       int                  `json:"price" form:"price" validate:"required"`
+	Description string               `json:"description" form:"description" validate:"required"`
+	Stock       int                  `json:"stock" form:"stock" validate:"required"`
+	Photo       string               `json:"photo" form:"photo" validate:"required"`
+	UserID      int                  `json:"-"`
+	User        UsersProfileResponse `json:"user"`
+}
+
+type ProductUserResponse struct {
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	Price       int    `json:"price"`
+	Description string `json:"description"`
+	Stock       int    `json:"stock"`
+	Photo       string `json:"photo"`
+	UserID      int    `json:"-"`
+}
+
+func (ProductResponse) TableName() string {
+	return "products"
+}
+
+func (ProductUserResponse) TableName() string {
+	return "products"
 }
