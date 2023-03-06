@@ -9,4 +9,5 @@ type ProfileResponse struct {
 	Address string                      `json:"address" gorm:"type: text"`
 	UserID  int                         `json:"user_id"`
 	User    models.UsersProfileResponse `json:"user"`
+	Photo   string                      `json:"photo"`
 }

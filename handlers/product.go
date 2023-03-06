@@ -10,6 +10,7 @@ import (
 	"backEnd/repositories"
 	"net/http"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
 )
 
@@ -22,6 +23,7 @@ func HandleProduct(ProductRepository repositories.ProductRepository) *handlerPro
 }
 
 func (h *handlerProduct) GetProduct(c echo.Context) error {
+
 	id, _ := strconv.Atoi(c.Param("id"))
 
 	product, err := h.ProductRepository.GetProduct(id)
@@ -42,13 +44,17 @@ func (h *handlerProduct) FindProduct(c echo.Context) error {
 }
 
 func (h *handlerProduct) CreateProduct(c echo.Context) error {
+
 	request := new(productsdto.CreateProductRequset)
 	if err := c.Bind(request); err != nil {
 		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
 	}
-
+	// get data file
 	dataFile := c.Get("dataFile").(string)
 	fmt.Println("this is data file", dataFile)
+	// get jwt tokens witk key "id"
+	loginUser := c.Get("userLogin")
+	isLoginUser := loginUser.(jwt.MapClaims)["id"].(float64)
 
 	price, _ := strconv.Atoi(c.FormValue("price"))
 	qty, _ := strconv.Atoi(c.FormValue("stock"))
@@ -60,7 +66,7 @@ func (h *handlerProduct) CreateProduct(c echo.Context) error {
 		Description: c.FormValue("desc"),
 		Stock:       qty,
 		Photo:       dataFile,
-		UserID:      1,
+		UserID:      int(isLoginUser),
 	}
 
 	data, err := h.ProductRepository.CreateProduct(product)
@@ -89,31 +95,61 @@ func (h *handlerProduct) DeleteProduct(c echo.Context) error {
 	return c.JSON(http.StatusOK, dto.SuccessResult{Code: http.StatusOK, Data: convertProduct(data)})
 }
 
-func (h *handlerProduct) UpdateProduct(C echo.Context) error {
-	request := new(productsdto.UpdateProductRequest)
-	if err := C.Bind(&request); err != nil {
-		return C.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
+func (h *handlerProduct) UpdateProduct(c echo.Context) error {
+
+	//geting id from params
+	id, _ := strconv.Atoi(c.Param("id"))
+	product, _ := h.ProductRepository.GetProduct(id)
+
+	// get data file
+	dataFile := c.Get("dataFile").(string)
+	fmt.Println("this is data file", dataFile)
+	//
+
+	//getting value from form file
+	price, _ := strconv.Atoi(c.FormValue("price"))
+	qty, _ := strconv.Atoi(c.FormValue("stock"))
+	name := c.FormValue("name")
+	description := c.FormValue("description")
+	//
+
+	// if err != nil {
+	// 	return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
+	// }
+
+	// if request.Name != "" {
+	// 	product.Name = c.FormValue("name")
+	// }
+
+	// if request.Price != "" {
+	// 	product.Price = price
+	// }
+
+	// if request.Photo != "" {
+	// 	product.Photo = dataFile
+	// }
+	// if request.Stock != "" {
+	// 	product.Stock = qty
+	// }
+	// if request.Description != "" {
+	// 	product.Description = c.FormValue("description")
+	// }
+
+	productUpdate := models.Product{
+		ID:          id,
+		Name:        name,
+		Description: description,
+		Price:       price,
+		Stock:       qty,
+		Photo:       dataFile,
+		UserID:      product.UserID,
 	}
 
-	id, _ := strconv.Atoi(C.Param("id"))
-	product, err := h.ProductRepository.GetProduct(id)
-
+	data, err := h.ProductRepository.UpdateProduct(productUpdate)
 	if err != nil {
-		return C.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()})
 	}
-
-	if request.Name != "" {
-		product.Name = request.Name
-	}
-	if request.Description != "" {
-		product.Description = request.Description
-	}
-
-	data, err := h.ProductRepository.UpdateProduct(product)
-	if err != nil {
-		return C.JSON(http.StatusInternalServerError, dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()})
-	}
-	return C.JSON(http.StatusOK, dto.SuccessResult{Code: http.StatusOK, Data: convertProduct(data)})
+	return c.JSON(http.StatusOK, dto.SuccessResult{Code: http.StatusOK, Data: data})
 
 }
 
@@ -123,150 +159,6 @@ func convertProduct(u models.Product) productsdto.ProductResponse {
 		Description: u.Description,
 		Price:       u.Price,
 		Stock:       u.Stock,
+		Photo:       u.Photo,
 	}
 }
-
-// import (
-// 	"backEnd/dto"
-// 	"backEnd/dto/result"
-// 	"backEnd/models"
-// 	"backEnd/repositories"
-// 	"fmt"
-// 	"net/http"
-// 	"strconv"
-
-// 	"github.com/go-playground/validator"
-// 	"github.com/labstack/echo/v4"
-// )
-
-// type productControl struct {
-// 	ProductRepository repositories.ProductRepository
-// }
-
-// func ControlProduct(ProductRepository repositories.ProductRepository) *productControl {
-// 	return &productControl{ProductRepository}
-// }
-
-// func (h *productControl) FindProducts(c echo.Context) error {
-// 	products, err := h.ProductRepository.FindProduct()
-// 	if err != nil {
-// 		return c.JSON(http.StatusBadRequest, result.ErrorResult{Status: http.StatusBadRequest, Message: err.Error()})
-// 	}
-
-// 	return c.JSON(http.StatusOK, result.SuccessResult{Status: http.StatusOK, Data: products})
-// }
-
-// func (h *productControl) GetProducts(c echo.Context) error {
-// 	id, _ := strconv.Atoi(c.Param("id"))
-
-// 	products, err := h.ProductRepository.GetProducts(id)
-// 	if err != nil {
-// 		return c.JSON(http.StatusBadRequest, result.ErrorResult{Status: http.StatusBadRequest, Message: err.Error()})
-// 	}
-
-// 	return c.JSON(http.StatusOK, result.SuccessResult{Status: http.StatusOK, Data: convProduct(products)})
-// }
-
-// func (h *productControl) CreateProduct(c echo.Context) error {
-// 	// get the datafile here
-// 	dataFile := c.Get("dataFile").(string)
-// 	fmt.Println("this is data file", dataFile)
-
-// 	price, _ := strconv.Atoi(c.FormValue("price"))
-// 	stock, _ := strconv.Atoi(c.FormValue("stock"))
-
-// 	request := dto.CreateProductRequest{
-// 		Name:        c.FormValue("name"),
-// 		Description: c.FormValue("desc"),
-// 		Price:       price,
-// 		Photo:       dataFile,
-// 		Stock:       stock,
-// 	}
-
-// 	validation := validator.New()
-// 	err := validation.Struct(request)
-// 	if err != nil {
-// 		return c.JSON(http.StatusBadRequest, result.ErrorResult{Status: http.StatusBadRequest, Message: err.Error()})
-// 	}
-
-// 	// data form pattern submit to pattern entity db product
-// 	product := models.Product{
-// 		Name:        request.Name,
-// 		Price:       request.Price,
-// 		Description: request.Description,
-// 		Stock:       request.Stock,
-// 		Photo:       request.Photo,
-// 	}
-
-// 	data, err := h.ProductRepository.CreateProduct(product)
-// 	if err != nil {
-// 		return c.JSON(http.StatusInternalServerError, result.ErrorResult{Status: http.StatusInternalServerError, Message: err.Error()})
-// 	}
-
-// 	return c.JSON(http.StatusOK, result.SuccessResult{Status: http.StatusOK, Data: convProduct(data)})
-// }
-
-// func (h *productControl) UpdateProduct(c echo.Context) error {
-// 	request := new(dto.UpdateProductRequest)
-// 	if err := c.Bind(&request); err != nil {
-// 		return c.JSON(http.StatusBadRequest, result.ErrorResult{Status: http.StatusBadRequest, Message: err.Error()})
-// 	}
-
-// 	id, _ := strconv.Atoi(c.Param("id"))
-
-// 	product, err := h.ProductRepository.GetProducts(id)
-
-// 	if err != nil {
-// 		return c.JSON(http.StatusBadRequest, result.ErrorResult{Status: http.StatusBadRequest, Message: err.Error()})
-// 	}
-
-// 	if request.Name != "" {
-// 		product.Name = request.Name
-// 	}
-// 	if request.Price != 0 {
-// 		product.Price = request.Price
-// 	}
-// 	if request.Description != "" {
-// 		product.Description = request.Description
-// 	}
-// 	if request.Stock != 0 {
-// 		product.Stock = request.Stock
-// 	}
-// 	if request.Photo != "" {
-// 		product.Photo = request.Photo
-// 	}
-
-// 	data, err := h.ProductRepository.UpdateProduct(product, id)
-// 	if err != nil {
-// 		return c.JSON(http.StatusInternalServerError, result.ErrorResult{Status: http.StatusInternalServerError, Message: err.Error()})
-// 	}
-
-// 	return c.JSON(http.StatusOK, result.SuccessResult{Status: http.StatusOK, Data: convProduct(data)})
-// }
-
-// func (h *productControl) DeleteProduct(c echo.Context) error {
-// 	id, _ := strconv.Atoi(c.Param("id"))
-
-// 	user, err := h.ProductRepository.GetProducts(id)
-// 	if err != nil {
-// 		return c.JSON(http.StatusBadRequest, result.ErrorResult{Status: http.StatusBadRequest, Message: err.Error()})
-// 	}
-
-// 	data, err := h.ProductRepository.DeleteProduct(user, id)
-// 	if err != nil {
-// 		return c.JSON(http.StatusInternalServerError, result.ErrorResult{Status: http.StatusInternalServerError, Message: err.Error()})
-// 	}
-
-// 	return c.JSON(http.StatusOK, result.SuccessResult{Status: http.StatusOK, Data: convProduct(data)})
-// }
-
-// func convProduct(u models.Product) models.ProductResponse {
-// 	return models.ProductResponse{
-// 		Name:        u.Name,
-// 		Price:       u.Price,
-// 		Description: u.Description,
-// 		Stock:       u.Stock,
-// 		Photo:       u.Photo,
-// 		User:        u.User,
-// 	}
-// }

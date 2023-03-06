@@ -8,8 +8,9 @@ type CreateProductRequset struct {
 }
 
 type UpdateProductRequest struct {
-	Name        string `json:"name" `
+	Name        string `json:"name"`
 	Price       string `json:"price"`
 	Description string `json:"description"`
 	Stock       string `json:"stock"`
+	Photo       string `json:"photo"`
 }
