@@ -38,8 +38,8 @@ func (h *handlerTransaction) CreateTransaction(c echo.Context) error {
 		Email:     request.Email,
 		Status:    "Waiting Approve",
 		Address:   request.Address,
-		Date:      time.Time{},
-		CreatedAt: time.Time{},
+		Date:      time.Now(),
+		CreatedAt: time.Now(),
 	}
 
 	newTransaction, err := h.TransactionRepository.CreateTransaction(transaction)
